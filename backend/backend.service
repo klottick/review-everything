@@ -1,0 +1,15 @@
+[Unit]
+Description=Review Everything Backend
+After=network.target
+
+[Service]
+Type=simple
+User=klottick
+WorkingDirectory=/home/klottick/repos/review-everything/backend
+Environment="PATH=/home/klottick/repos/review-everything/backend/.venv/bin"
+EnvironmentFile=/home/klottick/repos/review-everything/backend/.env
+ExecStart=/home/klottick/repos/review-everything/backend/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
