@@ -34,8 +34,12 @@ export interface Item {
   url: string | null;
   what_i_got: string | null;
   image_url: string | null;
+  to_try: boolean;
+  to_try_reason: string | null;
   reviews: Review[];
   average_scores: Record<string, number> | null;
+  lat: number | null;  // Cached geocode
+  lng: number | null;  // Cached geocode
 }
 
 export interface Review {

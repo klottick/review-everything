@@ -20,7 +20,7 @@ export const metricsApi = {
 
 export const itemsApi = {
   getAll: (categoryId?: number) => api.get<Item[]>('/items', { params: { category_id: categoryId } }).then(r => r.data),
-  create: (data: { category_id: number; name: string; external_id?: string | null; reference?: string | null; address?: string | null; google_rating?: string | null; url?: string | null; what_i_got?: string | null; image_url?: string | null }) => api.post<Item>('/items', data).then(r => r.data),
+  create: (data: { category_id: number; name: string; external_id?: string | null; reference?: string | null; address?: string | null; google_rating?: string | null; url?: string | null; what_i_got?: string | null; image_url?: string | null; to_try?: boolean; to_try_reason?: string | null }) => api.post<Item>('/items', data).then(r => r.data),
   getOne: (id: number) => api.get<Item>(`/items/${id}`).then(r => r.data),
   delete: (id: number) => api.delete(`/items/${id}`),
 };
@@ -40,4 +40,5 @@ export const googleApi = {
   search: (query: string) => api.get<{ results: PlaceSearchResult[]; status: string }>('/google/search', { params: { query } }).then(r => r.data),
   getPlace: (placeId: string) => api.get<PlaceSearchResult>(`/google/place/${placeId}`).then(r => r.data),
   getFromUrl: (url: string) => api.post<PlaceSearchResult>('/google/from-url', { url }).then(r => r.data),
+  geocode: (address: string) => api.get<{ lat: number | null; lng: number | null }>('/google/geocode', { params: { address } }).then(r => r.data),
 };

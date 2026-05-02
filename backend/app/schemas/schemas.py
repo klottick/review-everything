@@ -57,6 +57,10 @@ class ItemBase(BaseModel):
     url: Optional[str] = None
     what_i_got: Optional[str] = None
     image_url: Optional[str] = None
+    to_try: bool = False
+    to_try_reason: Optional[str] = None
+    lat: Optional[str] = None
+    lng: Optional[str] = None
 
 class ItemCreate(ItemBase):
     pass

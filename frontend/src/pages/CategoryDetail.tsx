@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography as Typ, Card, CardContent, Grid, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tab, Tabs } from '@mui/material';
+import { Box, Typography as Typ, Card, CardContent, Grid, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tab, Tabs, FormControlLabel, Checkbox } from '@mui/material';
 import { Add, Delete, ArrowBack, Google, Search, Star } from '@mui/icons-material';
 import { categoriesApi, metricsApi, itemsApi, googleApi } from '../api/client';
 import type { Category, Item, PlaceSearchResult } from '../types';
@@ -22,6 +22,8 @@ export function CategoryDetail() {
   
   const [newItemName, setNewItemName] = useState('');
   const [newItemWhatIGot, setNewItemWhatIGot] = useState('');
+  const [newItemToTry, setNewItemToTry] = useState(false);
+  const [newItemToTryReason, setNewItemToTryReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<PlaceSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -109,9 +111,13 @@ export function CategoryDetail() {
       address: selectedPlace?.address || undefined,
       google_rating: selectedPlace?.rating || undefined,
       url: selectedPlace?.url || undefined,
+      to_try: newItemToTry,
+      to_try_reason: newItemToTry ? (newItemToTryReason || undefined) : undefined,
     });
     setNewItemName('');
     setNewItemWhatIGot('');
+    setNewItemToTry(false);
+    setNewItemToTryReason('');
     setSelectedPlace(null);
     setSearchResults([]);
     setGoogleUrlInput('');
@@ -160,6 +166,8 @@ export function CategoryDetail() {
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
         <Tab label="Items" />
+        <Tab label="To Try" />
+        <Tab label="Map" />
         <Tab label="Metrics" />
       </Tabs>
 
@@ -183,6 +191,7 @@ export function CategoryDetail() {
                 <TableHead sx={{ bgcolor: 'grey.100' }}>
                   <TableRow>
                     <TableCell>Name</TableCell>
+                    <TableCell>Try</TableCell>
                     <TableCell>What I Got</TableCell>
                     <TableCell>Address</TableCell>
                     <TableCell>Rating</TableCell>
@@ -202,6 +211,11 @@ export function CategoryDetail() {
                         >
                           {item.name}
                         </Typ>
+                      </TableCell>
+                      <TableCell>
+                        {item.to_try ? (
+                          <Chip icon={<Star />} label="Want" color="warning" size="small" />
+                        ) : '-'}
                       </TableCell>
                       <TableCell>{item.what_i_got || '-'}</TableCell>
                       <TableCell sx={{ maxWidth: 200 }}>{item.address || '-'}</TableCell>
@@ -238,7 +252,39 @@ export function CategoryDetail() {
         </>
       )}
 
-      {tab === 1 && (
+      {tab === 1 && items.filter(i => i.to_try).length > 0 && (
+        <Grid container spacing={2}>
+          {items.filter(i => i.to_try).map((item) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
+              <Card sx={{ borderLeft: 4, borderColor: 'warning.main' }}>
+                <CardContent>
+                  <Typ sx={{ fontWeight: 600 }}>{item.name}</Typ>
+                  {item.to_try_reason && <Typ variant="body2" color="text.secondary">{item.to_try_reason}</Typ>}
+                  <Typ variant="body2" color="text.secondary">{item.address}</Typ>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {tab === 2 && items.filter(i => i.lat && i.lng).length > 0 && (
+        <Card sx={{ p: 2, minHeight: 400 }}>
+          <CardContent>
+            <Typ variant="h6" sx={{ mb: 2 }}>Map View</Typ>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {items.filter(i => i.lat && i.lng).map((item) => (
+                <Chip key={item.id} label={item.name} onClick={() => item.url && window.open(item.url, '_blank')} />
+              ))}
+            </Box>
+            <Typ variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              {items.filter(i => i.lat && i.lng).length} items with locations
+            </Typ>
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 3 && (
         <Grid container spacing={2}>
           {category.metrics.length === 0 ? (
             <Grid size={{ xs: 12 }}>
@@ -404,7 +450,24 @@ export function CategoryDetail() {
             onChange={(e) => setNewItemWhatIGot(e.target.value)}
             placeholder="e.g., Burger and fries, Pad Thai, etc."
             helperText={selectedPlace ? `Selected: ${selectedPlace.name}` : "Or enter manually"}
+            sx={{ mb: 2 }}
           />
+          <FormControlLabel
+            control={
+              <Checkbox checked={newItemToTry} onChange={(e) => setNewItemToTry(e.target.checked)} />
+            }
+            label="Want to Try"
+          />
+          {newItemToTry && (
+            <TextField
+              fullWidth
+              label="Why want to try?"
+              value={newItemToTryReason}
+              onChange={(e) => setNewItemToTryReason(e.target.value)}
+              placeholder="e.g., Heard the pasta is amazing"
+              sx={{ mb: 2 }}
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenItemDialog(false)}>Cancel</Button>

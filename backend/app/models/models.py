@@ -48,6 +48,10 @@ class Item(Base):
     url = Column(String, nullable=True)
     what_i_got = Column(String, nullable=True)  # What you ordered/had
     image_url = Column(String, nullable=True)  # Uploaded image URL
+    to_try = Column(Boolean, default=False)  # Mark as "want to try"
+    to_try_reason = Column(String, nullable=True)  # Why you want to try it
+    lat = Column(String, nullable=True)  # Cached latitude
+    lng = Column(String, nullable=True)  # Cached longitude
     
     category = relationship("Category", back_populates="items")
     reviews = relationship("Review", back_populates="item", cascade="all, delete-orphan")

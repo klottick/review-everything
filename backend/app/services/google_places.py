@@ -109,11 +109,9 @@ async def get_place_from_url(data: dict):
     if not url:
         raise HTTPException(status_code=400, detail="URL is required")
     
-    # Try to extract place_id from URL
     place_id = extract_place_id_from_url(url)
     
     if not place_id:
-        # Try searching by the URL text
         try:
             search_result = await search_places(url)
             if search_result["results"]:
@@ -123,3 +121,42 @@ async def get_place_from_url(data: dict):
         raise HTTPException(status_code=400, detail="Could not find place from URL")
     
     return await get_place_details(place_id)
+
+# Cache for geocoding to reduce API calls
+_geocode_cache: dict[str, tuple[float, float] | None] = {}
+
+@router.get("/geocode")
+async def geocode_address(address: str):
+    """Geocode an address and cache the result"""
+    global _geocode_cache
+    
+    if not GOOGLE_API_KEY:
+        raise HTTPException(status_code=500, detail="Google API key not configured")
+    
+    # Check cache first
+    cache_key = address.lower().strip()
+    if cache_key in _geocode_cache:
+        cached = _geocode_cache[cache_key]
+        if cached:
+            return {"lat": cached[0], "lng": cached[1]}
+        return {"lat": None, "lng": None}
+    
+    url = "https://maps.googleapis.com/maps/api/geocode/json"
+    params = {"address": address, "key": GOOGLE_API_KEY}
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, params=params, timeout=10.0)
+        
+        if response.status_code != 200:
+            _geocode_cache[cache_key] = None
+            return {"lat": None, "lng": None}
+        
+        data = response.json()
+        if data.get("status") == "OK" and data.get("results"):
+            location = data["results"][0]["geometry"]["location"]
+            lat, lng = location["lat"], location["lng"]
+            _geocode_cache[cache_key] = (lat, lng)
+            return {"lat": lat, "lng": lng}
+        
+        _geocode_cache[cache_key] = None
+        return {"lat": None, "lng": None}
